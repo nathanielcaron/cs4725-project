@@ -1,2 +1,1 @@
-# silver-octo-memory
-CS 4725 - Group Project
+# CS 4725 - Group Project
