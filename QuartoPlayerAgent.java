@@ -36,7 +36,55 @@ public class QuartoPlayerAgent extends QuartoAgent {
 	 */
     @Override
     protected String pieceSelectionAlgorithm() {
-        
+        //some useful lines:
+        //String BinaryString = String.format("%5s", Integer.toBinaryString(pieceID)).replace(' ', '0');
+
+        this.startTimer();
+        boolean skip = false;
+        for (int i = 0; i < this.quartoBoard.getNumberOfPieces(); i++) {
+            skip = false;
+            if (!this.quartoBoard.isPieceOnBoard(i)) {
+                for (int row = 0; row < this.quartoBoard.getNumberOfRows(); row++) {
+                    for (int col = 0; col < this.quartoBoard.getNumberOfColumns(); col++) {
+                        if (!this.quartoBoard.isSpaceTaken(row, col)) {
+                            QuartoBoard copyBoard = new QuartoBoard(this.quartoBoard);
+                            copyBoard.insertPieceOnBoard(row, col, i);
+                            if (copyBoard.checkRow(row) || copyBoard.checkColumn(col) || copyBoard.checkDiagonals()) {
+                                skip = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (skip) {
+                        break;
+                    }
+
+                }
+                if (!skip) {
+                    return String.format("%5s", Integer.toBinaryString(i)).replace(' ', '0');
+                }
+
+            }
+            if (this.getMillisecondsFromTimer() > (this.timeLimitForResponse - COMMUNICATION_DELAY)) {
+                //handle for when we are over some imposed time limit (make sure you account for communication delay)
+            }
+            String message = null;
+            //for every other i, check if there is a missed message
+            /*
+            if (i % 2 == 0 && ((message = this.checkForMissedServerMessages()) != null)) {
+                //the oldest missed message is stored in the variable message.
+                //You can see if any more missed messages are in the socket by running this.checkForMissedServerMessages() again
+            }
+            */
+        }
+
+
+        //if we don't find a piece in the above code just grab the first random piece
+        int pieceId = this.quartoBoard.chooseRandomPieceNotPlayed(100);
+        String BinaryString = String.format("%5s", Integer.toBinaryString(pieceId)).replace(' ', '0');
+
+
+        return BinaryString;
     }
 
     /*
@@ -46,5 +94,24 @@ public class QuartoPlayerAgent extends QuartoAgent {
     @Override
     protected String moveSelectionAlgorithm(int pieceID) {
         
+        for (int row = 0; row < this.quartoBoard.getNumberOfRows(); row++) {
+            for (int col = 0; col < this.quartoBoard.getNumberOfColumns(); col++) {
+                if (!this.quartoBoard.isSpaceTaken(row, col)) {
+                    QuartoBoard copyBoard = new QuartoBoard(this.quartoBoard);
+                    copyBoard.insertPieceOnBoard(row, col, pieceID);
+                    if (copyBoard.checkRow(row) || copyBoard.checkColumn(col) || copyBoard.checkDiagonals()) {
+                        return row + "," + col;
+                    }
+                }
+            }
+        }
+
+
+        // If no winning move is found in the above code, then return a random (unoccupied) square
+        int[] move = new int[2];
+        QuartoBoard copyBoard = new QuartoBoard(this.quartoBoard);
+        move = copyBoard.chooseRandomPositionNotPlayed(100);
+
+        return move[0] + "," + move[1];
     }
 }

@@ -96,10 +96,17 @@ public class QuartoSemiRandomAgent extends QuartoAgent {
     @Override
     protected String moveSelectionAlgorithm(int pieceID) {
 
-        //If there is a winning move, take it
-
-        // [This is where you should insert the required code for Assignment 1.]
-
+        for (int row = 0; row < this.quartoBoard.getNumberOfRows(); row++) {
+            for (int col = 0; col < this.quartoBoard.getNumberOfColumns(); col++) {
+                if (!this.quartoBoard.isSpaceTaken(row, col)) {
+                    QuartoBoard copyBoard = new QuartoBoard(this.quartoBoard);
+                    copyBoard.insertPieceOnBoard(row, col, pieceID);
+                    if (copyBoard.checkRow(row) || copyBoard.checkColumn(col) || copyBoard.checkDiagonals()) {
+                        return row + "," + col;
+                    }
+                }
+            }
+        }
 
 
         // If no winning move is found in the above code, then return a random (unoccupied) square
