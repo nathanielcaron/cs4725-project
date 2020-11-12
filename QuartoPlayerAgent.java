@@ -246,7 +246,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
                 QuartoBoard currentGameStateBoard = new  QuartoBoard(gameStates[i].getCurrentBoard());
                 sum = 0;
                 int[] randomMove = new int[2];
-                int randomPieceID = gameState[i].getPiece();
+                int randomPieceID = gameStates[i].getPiece();
                 for (int j = 0; j < MAX_SIMULATIONS; j++) {
                     double currentScore = 0;
                     QuartoBoard currentBoard = new QuartoBoard(currentGameStateBoard);
