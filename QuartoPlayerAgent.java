@@ -7,11 +7,16 @@
   * Nathaniel Caron, 3598979
   * Sahil Saini, 3562310
   */
+
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class QuartoPlayerAgent extends QuartoAgent {
 
     // Class to represent a game state node
     public class GameState {
         private double expectedScore;
+        private double sum;
         // MAX = 1, MIN = 0
         private int turn;
         private int piece = -1;
@@ -31,8 +36,8 @@ public class QuartoPlayerAgent extends QuartoAgent {
             return this.piece;
         }
 
-        public void setTurn(int turn) {
-            this.turn = turn;
+        public void setTurn(int Newturn) {
+            this.turn = Newturn;
         }
 
         public int getTurn() {
@@ -54,6 +59,14 @@ public class QuartoPlayerAgent extends QuartoAgent {
 
         public double getExpectedScore() {
             return this.expectedScore;
+        }
+
+        public void setSum(double sum) {
+            this.sum = sum;
+        }
+
+        public double getSum() {
+            return this.sum;
         }
 
         public QuartoBoard getCurrentBoard() {
@@ -98,10 +111,13 @@ public class QuartoPlayerAgent extends QuartoAgent {
 	 * Function to find the most optimal piece
      *  Monte Carlo:
         Start state is current board
+        (eliminate potentially winning pieces)
         MAX: branches for all pieces available (choose piece)
         MIN: branches for each position available (choose position)
         RANDOM MOVES START HERE
         MIN: random piece
+        loop
+        (pretty much same algorithm)
         MAX: random position
         MAX: random piece
         MIN: random position
@@ -175,7 +191,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
      */
     @Override
     protected String moveSelectionAlgorithm(int pieceID) {
-        System.out.println("--- Choosing a move ---");
+        this.startTimer();
 
         // First try to find a winning move
         for (int row = 0; row < this.quartoBoard.getNumberOfRows(); row++) {
@@ -190,10 +206,9 @@ public class QuartoPlayerAgent extends QuartoAgent {
             }
         }
 
-        // Project code here
+        // Define tree of game states
         GameState gameStates[] = new GameState[800];
         int position = 0;
-
         for (int row = 0; row < this.quartoBoard.getNumberOfRows(); row++) {
             for (int col = 0; col < this.quartoBoard.getNumberOfColumns(); col++) {
                 if (!this.quartoBoard.isSpaceTaken(row, col)) {
@@ -206,7 +221,8 @@ public class QuartoPlayerAgent extends QuartoAgent {
                             gameStates[position] = new GameState(1, copyBoard);
                             gameStates[position].setMove(row, col);
                             gameStates[position].setPiece(pieceNum);
-                            gameStates[position].setTurn(0);
+                            // Set turn to MIN
+                            // gameStates[position].setTurn(0);
                             position++;
                         }
                     }
@@ -214,64 +230,80 @@ public class QuartoPlayerAgent extends QuartoAgent {
             }
         }
 
-        System.out.println("Game States Possible: ");
+        // Perform random runs for every game state in tree
         double highestExpectedScore = -1;
         int highestExpectedScorePosition = 0;
-        final int MAX_SIMULATIONS = 1000;
-        for (int i = 0; i < position; i++) {
-            // gameSates[i].printGameState();
-            // Perform 100 random runs
-            QuartoBoard currentBoard = gameStates[i].getCurrentBoard();
-            double sum = 0;
-            int[] randomMove = new int[2];
-            int randomPieceID;
-            for (int j = 0; j < MAX_SIMULATIONS; j++) {
-                double currentScore = 0;
-                while (true) {
-                    // Choose random move
-                    randomMove = currentBoard.chooseRandomPositionNotPlayed(50);
-                    currentBoard.insertPieceOnBoard(randomMove[0], randomMove[1], gameStates[i].getPiece());
-                    
-                    // Check if game is over
-                    if (checkIfGameIsWon(currentBoard)) {
-                        if (gameStates[i].getTurn() == 1) {
-                            currentScore = 1;
-                            break;
-                        } else {
-                            currentScore = -1;
+        double MAX_SIMULATIONS = 100;
+        double sum = 0;
+        int simulations_multiplier = 0;
+        boolean cont = true;
+        while(cont) {
+            simulations_multiplier++;
+            cont = false;
+            for (int i = 0; i < position; i++) {
+                int turn = 0;
+                // Perform random runs
+                QuartoBoard currentGameStateBoard = new  QuartoBoard(gameStates[i].getCurrentBoard());
+                sum = 0;
+                int[] randomMove = new int[2];
+                int randomPieceID = gameState[i].getPiece();
+                for (int j = 0; j < MAX_SIMULATIONS; j++) {
+                    double currentScore = 0;
+                    QuartoBoard currentBoard = new QuartoBoard(currentGameStateBoard);
+                    while (true) {
+                        // Choose random move
+                        randomMove = currentBoard.chooseRandomPositionNotPlayed(50);
+                        currentBoard.insertPieceOnBoard(randomMove[0], randomMove[1], randomPieceID);
+                        
+                        // Check if game is over
+                        if (checkIfGameIsWon(currentBoard)) {
+                            if (turn == 1) {
+                                currentScore = 10;
+                                break;
+                            } else {
+                                currentScore = -10;
+                                break;
+                            }
+                        } else if (checkIfGameIsDraw(currentBoard)) {
+                            currentScore = 0;
                             break;
                         }
-                    } else if (checkIfGameIsDraw(currentBoard)) {
-                        currentScore = 0;
-                        break;
+
+                        // Choose random piece
+                        randomPieceID = currentBoard.chooseRandomPieceNotPlayed(50);
+
+                        // Switch turns
+                        if(turn == 1) {
+                            turn = 0;
+                        } else {
+                            turn = 1;
+                        }
                     }
 
-                    // Choose random piece
-                    randomPieceID = currentBoard.chooseRandomPieceNotPlayed(50);
-                    gameStates[i].setPiece(randomPieceID);
-
-                    // Switch turns
-                    if(gameStates[i].getTurn() == 1) {
-                        gameStates[i].setTurn(0);
-                    } else {
-                        gameStates[i].setTurn(1);
-                    }
+                    sum += currentScore;
                 }
-
-                sum += currentScore;
+                gameStates[i].setSum(gameStates[i].getSum() + sum);
             }
-            double result = sum / MAX_SIMULATIONS;
+
+            if (this.getMillisecondsFromTimer() <= 5000) {
+                cont = true;
+            }
+        }
+
+        System.out.println("Number of simulations: " + MAX_SIMULATIONS*simulations_multiplier);
+
+        for (int i = 0; i < position; i++) {
+            double result = (double)(sum / (MAX_SIMULATIONS*simulations_multiplier));
             gameStates[i].setExpectedScore(result);
+            // System.out.println(result);
             if (result > highestExpectedScore) {
                 highestExpectedScore = result;
                 highestExpectedScorePosition = i;
             }
         }
 
-        // If no winning move is found in the above code, then return a random (unoccupied) square
-        // int[] move = new int[2];
-        // QuartoBoard copyBoard = new QuartoBoard(this.quartoBoard);
-        // move = copyBoard.chooseRandomPositionNotPlayed(100);
+        System.out.println("Time Taken -: " + this.getMillisecondsFromTimer());
+
         return gameStates[highestExpectedScorePosition].getMove();
     }
 
