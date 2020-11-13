@@ -10,6 +10,7 @@
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays; 
 
 public class QuartoPlayerAgent extends QuartoAgent {
 
@@ -180,22 +181,50 @@ public class QuartoPlayerAgent extends QuartoAgent {
         GameState gameStates[] = new GameState[800];
         int position = 0;
 
+        int badPieces[] = new int[32];
+        // for (int i = 0; i < 32; i++) {
+        //     badPieces[i] = 0;
+        // }
+        Arrays.fill(badPieces,0);
+
+        boolean skip = false;
+        for (int i = 0; i < this.quartoBoard.getNumberOfPieces(); i++) {
+            skip = false;
+            if (!this.quartoBoard.isPieceOnBoard(i)) {
+                for (int row = 0; row < this.quartoBoard.getNumberOfRows(); row++) {
+                    for (int col = 0; col < this.quartoBoard.getNumberOfColumns(); col++) {
+                        if (!this.quartoBoard.isSpaceTaken(row, col)) {
+                            QuartoBoard copyBoard = new QuartoBoard(this.quartoBoard);
+                            copyBoard.insertPieceOnBoard(row, col, i);
+                            if (copyBoard.checkRow(row) || copyBoard.checkColumn(col) || copyBoard.checkDiagonals()) {
+                                System.out.println("Wining piece -: " + i);
+                                skip = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (skip) {
+                        badPieces[i] = 1;
+                        break;
+                    }
+                }
+            }
+        }
+
         // Define tree of game states (Works as expected)
         for (int i = 0; i < this.quartoBoard.getNumberOfPieces(); i++) {
             // MAX chooses a piece
-            if (!this.quartoBoard.isPieceOnBoard(i)) {
+            if (!this.quartoBoard.isPieceOnBoard(i) && badPieces[i] != 1) {
                 for (int row = 0; row < this.quartoBoard.getNumberOfRows(); row++) {
                     for (int col = 0; col < this.quartoBoard.getNumberOfColumns(); col++) {
                         if (!this.quartoBoard.isSpaceTaken(row, col)) {
                             // MIN chooses a move
                             QuartoBoard copyBoard = new QuartoBoard(this.quartoBoard);
                             copyBoard.insertPieceOnBoard(row, col, i);
-                            if (!copyBoard.checkRow(row) && !copyBoard.checkColumn(col) && !copyBoard.checkDiagonals()) {
-                                gameStates[position] = new GameState(0, copyBoard);
-                                gameStates[position].setMove(row, col);
-                                gameStates[position].setPiece(i);
-                                position++;
-                            }
+                            gameStates[position] = new GameState(0, copyBoard);
+                            gameStates[position].setMove(row, col);
+                            gameStates[position].setPiece(i);
+                            position++;
                         }
                     }
                 }
@@ -203,6 +232,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
         }
 
         if (position == 0) {
+            System.out.println("All pieces left can allow the other player to win");
             // Define tree of game states (Works as expected)
             for (int i = 0; i < this.quartoBoard.getNumberOfPieces(); i++) {
                 // MAX chooses a piece
@@ -225,10 +255,10 @@ public class QuartoPlayerAgent extends QuartoAgent {
         }
 
         // Test for game states tree
-        for (int i = 0; i < position; i++) {
-            System.out.println(i + " - piece: " + gameStates[i].getPiece() + ", move: " + gameStates[i].getMove());
-        }
-        System.out.println(position + "\n\n");
+        // for (int i = 0; i < position; i++) {
+        //     System.out.println(i + " - piece: " + gameStates[i].getPiece() + ", move: " + gameStates[i].getMove());
+        // }
+        // System.out.println(position + "\n\n");
 
         double highestExpectedScore = 100;
         int highestExpectedScorePosition = 0;
@@ -283,7 +313,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
 
         int positive = 0, neagtive = 0, zero = 0;
         for(int i = 0; i < position; i++) {
-            System.out.println("Piece: " + gameStates[i].getPiece() + ", Position: " + gameStates[i].getMove() + ", Expected Value: " + gameStates[i].getSum() / MAX_SIMULATIONS);
+            // System.out.println("Piece: " + gameStates[i].getPiece() + ", Position: " + gameStates[i].getMove() + ", Expected Value: " + gameStates[i].getSum() / MAX_SIMULATIONS);
             if(gameStates[i].getSum() == 0) {
                 zero++;
             } else if(gameStates[i].getSum() > 0) {
@@ -293,7 +323,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
             }
         }
 
-        System.out.println("Majority of games Won -: " + positive + " Majority of games Lost -: " + neagtive + " Majority of games Draw -: " + zero);
+        // System.out.println("Majority of games Won -: " + positive + " Majority of games Lost -: " + neagtive + " Majority of games Draw -: " + zero);
 
         double availablePieces[] = new double[32];
         for (int i = 0; i < 32; i++){
@@ -317,9 +347,9 @@ public class QuartoPlayerAgent extends QuartoAgent {
         // MAX selects the piece
         double largestSmallestValue = availablePieces[0];
         int largestSmallestValueLocation = 0;
-        System.out.println("availablePieces[" + 0 + "] = " + availablePieces[0]);
+        // System.out.println("availablePieces[" + 0 + "] = " + availablePieces[0]);
         for (int i = 1; i < 32; i++){
-            System.out.println("availablePieces[" + i + "] = " + availablePieces[i]);
+            // System.out.println("availablePieces[" + i + "] = " + availablePieces[i]);
             if(largestSmallestValue > 10) {
                 largestSmallestValue = availablePieces[i];
                 largestSmallestValueLocation = i;
