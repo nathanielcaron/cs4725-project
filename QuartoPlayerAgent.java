@@ -285,7 +285,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
                 gameStates[i].setSum(gameStates[i].getSum() + sum);
             }
 
-            if (this.getMillisecondsFromTimer() <= 5000) {
+            if (this.getMillisecondsFromTimer() <= 6000) {
                 cont = true;
             }
         }
@@ -293,7 +293,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
         System.out.println("Number of simulations: " + MAX_SIMULATIONS*simulations_multiplier);
 
         for (int i = 0; i < position; i++) {
-            double result = (double)(sum / (MAX_SIMULATIONS*simulations_multiplier));
+            double result = (double)(gameStates[i].getSum() / (MAX_SIMULATIONS*simulations_multiplier));
             gameStates[i].setExpectedScore(result);
             // System.out.println(result);
             if (result > highestExpectedScore) {
