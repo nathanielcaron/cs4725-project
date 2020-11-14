@@ -8,9 +8,7 @@
   * Sahil Saini, 3562310
   */
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays; 
+import java.util.Arrays;
 
 public class QuartoPlayerAgent extends QuartoAgent {
 
@@ -128,63 +126,13 @@ public class QuartoPlayerAgent extends QuartoAgent {
 	 */
     @Override
     protected String pieceSelectionAlgorithm() {
-        //some useful lines:
-        //String BinaryString = String.format("%5s", Integer.toBinaryString(pieceID)).replace(' ', '0');
         
         this.startTimer();
-        // boolean skip = false;
-        // for (int i = 0; i < this.quartoBoard.getNumberOfPieces(); i++) {
-        //     skip = false;
-        //     if (!this.quartoBoard.isPieceOnBoard(i)) {
-        //         for (int row = 0; row < this.quartoBoard.getNumberOfRows(); row++) {
-        //             for (int col = 0; col < this.quartoBoard.getNumberOfColumns(); col++) {
-        //                 if (!this.quartoBoard.isSpaceTaken(row, col)) {
-        //                     QuartoBoard copyBoard = new QuartoBoard(this.quartoBoard);
-        //                     copyBoard.insertPieceOnBoard(row, col, i);
-        //                     if (copyBoard.checkRow(row) || copyBoard.checkColumn(col) || copyBoard.checkDiagonals()) {
-        //                         skip = true;
-        //                         break;
-        //                     }
-        //                 }
-        //             }
-        //             if (skip) {
-        //                 break;
-        //             }
-
-        //         }
-        //         if (!skip) {
-        //             return String.format("%5s", Integer.toBinaryString(i)).replace(' ', '0');
-        //         }
-
-        //     }
-        //     if (this.getMillisecondsFromTimer() > (this.timeLimitForResponse - COMMUNICATION_DELAY)) {
-        //         //handle for when we are over some imposed time limit (make sure you account for communication delay)
-        //     }
-        //     String message = null;
-        //     //for every other i, check if there is a missed message
-        //     /*
-        //     if (i % 2 == 0 && ((message = this.checkForMissedServerMessages()) != null)) {
-        //         //the oldest missed message is stored in the variable message.
-        //         //You can see if any more missed messages are in the socket by running this.checkForMissedServerMessages() again
-        //     }
-        //     */
-        // }
-
-
-        // //if we don't find a piece in the above code just grab the first random piece
-        // int pieceId = this.quartoBoard.chooseRandomPieceNotPlayed(100);
-        // String BinaryString = String.format("%5s", Integer.toBinaryString(pieceId)).replace(' ', '0');
-
-
-        // return BinaryString;
 
         GameState gameStates[] = new GameState[800];
         int position = 0;
 
         int badPieces[] = new int[32];
-        // for (int i = 0; i < 32; i++) {
-        //     badPieces[i] = 0;
-        // }
         Arrays.fill(badPieces,0);
 
         boolean skip = false;
@@ -262,85 +210,121 @@ public class QuartoPlayerAgent extends QuartoAgent {
 
         double highestExpectedScore = 100;
         int highestExpectedScorePosition = 0;
-        final double MAX_SIMULATIONS = 200;
+        final double MAX_SIMULATIONS = 100;
         double sum = 0;
+        int simulations_multiplier = 0;
+        boolean cont = true;
+        int positionChecked = 0;
+        double averageSum = 0;
+        double totalSum = 0;
         int turn = 0;
 
-        // Perform simulations for every game state in tree
-        for (int i = 0; i < position; i++) {
-            sum = 0;
-            int[] randomMove = new int[2];
-            int randomPieceID;
-            for (int j = 0; j < MAX_SIMULATIONS; j++) {
-                QuartoBoard currentBoard = new QuartoBoard(gameStates[i].getCurrentBoard());
-                turn = 0;
-                double currentScore = 0;
-                // One game/simulation
-                while (true) {
-                    // Choose a random piece
-                    randomPieceID = currentBoard.chooseRandomPieceNotPlayed(100);
-                    
-                    // Switch turns
-                    if(turn == 1) {
+        while(cont) {
+            simulations_multiplier++;
+            cont = false;
+            positionChecked = 0;
+            totalSum = 0;
+
+            // Perform simulations for every game state in tree
+            for (int i = 0; i < position; i++) {
+                if(gameStates[i].getSum() <= averageSum) {
+                    positionChecked++;
+                    sum = 0;
+                    int[] randomMove = new int[2];
+                    int randomPieceID;
+                    for (int j = 0; j < MAX_SIMULATIONS; j++) {
+                        QuartoBoard currentBoard = new QuartoBoard(gameStates[i].getCurrentBoard());
                         turn = 0;
-                    } else {
-                        turn = 1;
-                    }
+                        double currentScore = 0;
+                        // One game/simulation
+                        while (true) {
+                            // Choose a random piece
+                            randomPieceID = currentBoard.chooseRandomPieceNotPlayed(100);
+                            
+                            // Switch turns
+                            if(turn == 1) {
+                                turn = 0;
+                            } else {
+                                turn = 1;
+                            }
 
-                    // Choose random move
-                    randomMove = currentBoard.chooseRandomPositionNotPlayed(100);
-                    currentBoard.insertPieceOnBoard(randomMove[0], randomMove[1], randomPieceID);
-                    
-                    // Check if game is over
-                    if (checkIfGameIsWon(currentBoard)) {
-                        if (turn == 1) {
-                            currentScore = 10;
-                            break;
-                        } else {
-                            currentScore = -10;
-                            break;
+                            // Choose random move
+                            randomMove = currentBoard.chooseRandomPositionNotPlayed(100);
+                            currentBoard.insertPieceOnBoard(randomMove[0], randomMove[1], randomPieceID);
+                            
+                            // Check if game is over
+                            if (checkIfGameIsWon(currentBoard)) {
+                                if (turn == 1) {
+                                    currentScore = 10;
+                                    break;
+                                } else {
+                                    currentScore = -10;
+                                    break;
+                                }
+                            } else if (checkIfGameIsDraw(currentBoard)) {
+                                currentScore = 0;
+                                break;
+                            }
                         }
-                    } else if (checkIfGameIsDraw(currentBoard)) {
-                        currentScore = 0;
-                        break;
+                        sum += currentScore;
                     }
+                    double newSum = gameStates[i].getSum() + sum;
+                    gameStates[i].setSum(newSum);
+                    totalSum = totalSum + newSum;
                 }
-                sum += currentScore;
             }
-            double newSum = gameStates[i].getSum() + sum;
-            gameStates[i].setSum(newSum);
+
+            averageSum = (double) (totalSum / positionChecked);
+
+            if(this.getMillisecondsFromTimer() <= 6000) {
+                cont = true;
+            }
         }
 
-        int positive = 0, neagtive = 0, zero = 0;
-        for(int i = 0; i < position; i++) {
-            // System.out.println("Piece: " + gameStates[i].getPiece() + ", Position: " + gameStates[i].getMove() + ", Expected Value: " + gameStates[i].getSum() / MAX_SIMULATIONS);
-            if(gameStates[i].getSum() == 0) {
-                zero++;
-            } else if(gameStates[i].getSum() > 0) {
-                positive++;
-            } else { 
-                neagtive++;
-            }
-        }
+        System.out.println("Number of simulations: " + MAX_SIMULATIONS*simulations_multiplier);
+
+        // int positive = 0, neagtive = 0, zero = 0;
+        // for(int i = 0; i < position; i++) {
+        //     // System.out.println("Piece: " + gameStates[i].getPiece() + ", Position: " + gameStates[i].getMove() + ", Expected Value: " + gameStates[i].getSum() / MAX_SIMULATIONS);
+        //     if(gameStates[i].getSum() == 0) {
+        //         zero++;
+        //     } else if(gameStates[i].getSum() > 0) {
+        //         positive++;
+        //     } else { 
+        //         neagtive++;
+        //     }
+        // }
 
         // System.out.println("Majority of games Won -: " + positive + " Majority of games Lost -: " + neagtive + " Majority of games Draw -: " + zero);
 
         double availablePieces[] = new double[32];
+
         for (int i = 0; i < 32; i++){
             availablePieces[i] = 11;
         }
+
         int count = 0;
         int currentPiece = 0;
 
+        // for (int i = 0; i < position; i++) {
+        //     double result = (double)(gameStates[i].getSum() / MAX_SIMULATIONS);
+        //     gameStates[i].setExpectedScore(result);
+        // }
+
         for (int i = 0; i < position; i++) {
-            double result = (double)(gameStates[i].getSum() / MAX_SIMULATIONS);
-            gameStates[i].setExpectedScore(result);
+            if(gameStates[i].getSum() <= averageSum) {
+                double result = (double)(gameStates[i].getSum() / (MAX_SIMULATIONS * simulations_multiplier));
+                gameStates[i].setExpectedScore(result);
+            }
+            // System.out.println(i + " Expected Value -: " + gameStates[i].getExpectedScore() + " Sum -: " + gameStates[i].getSum());
         }
 
         // MIN selects the move
         for (int i = 0; i < position; i++) {
-            if(availablePieces[gameStates[i].getPiece()] > gameStates[i].getExpectedScore()) {
-                availablePieces[gameStates[i].getPiece()] = gameStates[i].getExpectedScore();
+            if(gameStates[i].getSum() <= averageSum) {
+                if(availablePieces[gameStates[i].getPiece()] > gameStates[i].getExpectedScore()) {
+                    availablePieces[gameStates[i].getPiece()] = gameStates[i].getExpectedScore();
+                }
             }
         }
 
@@ -360,11 +344,16 @@ public class QuartoPlayerAgent extends QuartoAgent {
             }
         }
 
+        // Arrays.sort(availablePieces);
+        // largestSmallestValueLocation = 0;
+
         String BinaryString = String.format("%5s", Integer.toBinaryString(largestSmallestValueLocation)).replace(' ', '0');
         
         System.out.println("Piece Selected decimal: " + largestSmallestValueLocation);
         System.out.println("Piece Selected binary: " + BinaryString);
         
+        System.out.println("Time Taken -: " + this.getMillisecondsFromTimer());
+
         return BinaryString;
     }
 
@@ -441,6 +430,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
         int positionChecked = 0;
         double totalSum = 0;
         double averageSum = 0;
+        int turn = 0;
         while(cont) {
             simulations_multiplier++;
             cont = false;
@@ -449,7 +439,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
             for (int i = 0; i < position; i++) {
                 if(gameStates[i].getSum() >= averageSum) {
                     positionChecked++;
-                    int turn = 0;
+                    turn = 0;
                     // Perform random runs
                     QuartoBoard currentGameStateBoard = new  QuartoBoard(gameStates[i].getCurrentBoard());
                     sum = 0;
