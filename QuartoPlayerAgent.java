@@ -57,6 +57,14 @@ public class QuartoPlayerAgent extends QuartoAgent {
             return this.move[0] + "," + this.move[1];
         }
 
+        public int getMoveRow() {
+            return this.move[0];
+        }
+
+        public int getMoveColumn() {
+            return this.move[1];
+        }
+
         public void setExpectedScore(double expectedScore) {
             this.expectedScore = expectedScore;
         }
@@ -149,7 +157,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
                             copyBoard.insertPieceOnBoard(row, col, i);
                             if (copyBoard.checkRow(row) || copyBoard.checkColumn(col) || copyBoard.checkDiagonals()) {
                                 // TODO: Remove this
-                                System.out.println("Bad piece -: " + i);
+                                System.out.println("Bad piece: " + i);
                                 skip = true;
                                 break;
                             }
@@ -186,7 +194,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
         // If game states array is empty, then all pieces remaining could lead to the opponent winning (include all pieces remaining)
         if (position == 0) {
             // TODO: remove this
-            System.out.println("All pieces left can allow the other player to win");
+            // System.out.println("All pieces left can allow the other player to win");
 
             // Define tree of game states (fill GameStates array)
             for (int i = 0; i < this.quartoBoard.getNumberOfPieces(); i++) {
@@ -224,6 +232,9 @@ public class QuartoPlayerAgent extends QuartoAgent {
         long duration;
         long currentTime;
 
+        int currentRow = 0;
+        int currentColumn = 0;
+
         while (cont) {
             cont = false;
             simulationsStartTime = System.nanoTime();
@@ -238,10 +249,12 @@ public class QuartoPlayerAgent extends QuartoAgent {
                     QuartoBoard currentBoard = new QuartoBoard(gameStates[i].getCurrentBoard());
                     turn = 0;
                     double currentScore = 0;
+                    currentRow = gameStates[i].getMoveRow();
+                    currentColumn = gameStates[i].getMoveColumn();
                     // One game/simulation
                     while (true) {
                         // Check if game is over
-                        if (checkIfGameIsWon(currentBoard)) {
+                        if (checkIfGameIsWon(currentBoard, currentRow, currentColumn)) {
                             if (turn == 1) {
                                 currentScore = 10;
                                 break;
@@ -250,7 +263,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
                                 break;
                             }
                         } else if (checkIfGameIsDraw(currentBoard)) {
-                            currentScore = 0;
+                            currentScore = 3;
                             break;
                         }
 
@@ -267,6 +280,8 @@ public class QuartoPlayerAgent extends QuartoAgent {
                         // Choose a random move
                         randomMove = currentBoard.chooseRandomPositionNotPlayed(100);
                         currentBoard.insertPieceOnBoard(randomMove[0], randomMove[1], randomPieceID);
+                        currentRow = randomMove[0];
+                        currentColumn = randomMove[1];
                     }
                     sum += currentScore;
                 }
@@ -278,13 +293,13 @@ public class QuartoPlayerAgent extends QuartoAgent {
             simulationsStopTime = System.nanoTime();
             duration = (simulationsStopTime - simulationsStartTime)/1000000;
             currentTime = this.getMillisecondsFromTimer();
-            System.out.println("*** *** *** *** ***");
-            System.out.println("100 Simulations took: " + duration + " milliseconds.");
+            // System.out.println("*** *** *** *** ***");
+            // System.out.println("100 Simulations took: " + duration + " milliseconds.");
             if ((9000 - currentTime) > duration) {
-                System.out.println("Current time: " + currentTime + " still have time " + (int)(9000 - currentTime) + " milliseconds");
+                // System.out.println("Current time: " + currentTime + " still have time " + (int)(9000 - currentTime) + " milliseconds");
                 cont = true;
             }
-            System.out.println("*** *** *** *** ***");
+            // System.out.println("*** *** *** *** ***");
         }
 
         System.out.println("### ### Completed " + SIMULATIONS*simulationMultiplier + " simulations ### ###");
@@ -395,6 +410,9 @@ public class QuartoPlayerAgent extends QuartoAgent {
         double totalSum = 0;
         double averageSum = 0;
 
+        int currentRow = 0;
+        int currentColumn = 0;
+
         // Round 1:
         // Monte Carlo simulations for all GameState nodes in tree
         // Sets of 100 simulations until 6 second mark
@@ -422,9 +440,11 @@ public class QuartoPlayerAgent extends QuartoAgent {
                     turn = 1;
                     double currentScore = 0;
                     QuartoBoard currentBoard = new QuartoBoard(currentGameStateBoard);
+                    currentRow = gameStates[i].getMoveRow();
+                    currentColumn = gameStates[i].getMoveColumn();
                     while (true) {
                         // Check if game is over
-                        if (checkIfGameIsWon(currentBoard)) {
+                        if (checkIfGameIsWon(currentBoard, currentRow, currentColumn)) {
                             if (turn == 1) {
                                 currentScore = 10;
                                 break;
@@ -433,7 +453,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
                                 break;
                             }
                         } else if (checkIfGameIsDraw(currentBoard)) {
-                            currentScore = 0;
+                            currentScore = 3;
                             break;
                         }
 
@@ -447,6 +467,8 @@ public class QuartoPlayerAgent extends QuartoAgent {
                         // Choose a random move
                         randomMove = currentBoard.chooseRandomPositionNotPlayed(50);
                         currentBoard.insertPieceOnBoard(randomMove[0], randomMove[1], randomPieceID);
+                        currentRow = randomMove[0];
+                        currentColumn = randomMove[1];
 
                         // Choose a random piece
                         randomPieceID = currentBoard.chooseRandomPieceNotPlayed(50);
@@ -465,14 +487,14 @@ public class QuartoPlayerAgent extends QuartoAgent {
             simulationsStopTime = System.nanoTime();
             duration = (simulationsStopTime - simulationsStartTime)/1000000;
             currentTime = this.getMillisecondsFromTimer();
-            System.out.println("*** *** *** *** ***");
-            System.out.println("Round 1");
-            System.out.println("100 Simulations took: " + duration + " milliseconds.");
+            // System.out.println("*** *** *** *** ***");
+            // System.out.println("Round 1");
+            // System.out.println("100 Simulations took: " + duration + " milliseconds.");
             if ((6000 - currentTime) > duration) {
-                System.out.println("Current time: " + currentTime + " still have " + (int)(6000 - currentTime) + " milliseconds");
+                // System.out.println("Current time: " + currentTime + " still have " + (int)(6000 - currentTime) + " milliseconds");
                 cont = true;
             }
-            System.out.println("*** *** *** *** ***");
+            // System.out.println("*** *** *** *** ***");
         }
 
         // Calculate the average simulation sum for all GameState nodes in tree
@@ -510,9 +532,11 @@ public class QuartoPlayerAgent extends QuartoAgent {
                         turn = 1;
                         double currentScore = 0;
                         QuartoBoard currentBoard = new QuartoBoard(currentGameStateBoard);
+                        currentRow = gameStates[i].getMoveRow();
+                        currentColumn = gameStates[i].getMoveColumn();
                         while (true) {
                             // Check if game is over
-                            if (checkIfGameIsWon(currentBoard)) {
+                            if (checkIfGameIsWon(currentBoard, currentRow, currentColumn)) {
                                 if (turn == 1) {
                                     currentScore = 10;
                                     break;
@@ -521,7 +545,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
                                     break;
                                 }
                             } else if (checkIfGameIsDraw(currentBoard)) {
-                                currentScore = 0;
+                                currentScore = 3;
                                 break;
                             }
 
@@ -535,6 +559,8 @@ public class QuartoPlayerAgent extends QuartoAgent {
                             // Choose a random move
                             randomMove = currentBoard.chooseRandomPositionNotPlayed(100);
                             currentBoard.insertPieceOnBoard(randomMove[0], randomMove[1], randomPieceID);
+                            currentRow = randomMove[0];
+                            currentColumn = randomMove[1];
 
                             // Choose a random piece
                             randomPieceID = currentBoard.chooseRandomPieceNotPlayed(100);
@@ -554,17 +580,16 @@ public class QuartoPlayerAgent extends QuartoAgent {
             simulationsStopTime = System.nanoTime();
             duration = (simulationsStopTime - simulationsStartTime)/1000000;
             currentTime = this.getMillisecondsFromTimer();
-            System.out.println("*** *** *** *** ***");
-            System.out.println("Round 2");
-            System.out.println("100 Simulations took: " + duration + " milliseconds.");
+            // System.out.println("*** *** *** *** ***");
+            // System.out.println("Round 2");
+            // System.out.println("100 Simulations took: " + duration + " milliseconds.");
             if ((9000 - currentTime) > duration) {
-                System.out.println("Current time: " + currentTime + " still have " + (int)(9000 - currentTime) + " milliseconds");
+                // System.out.println("Current time: " + currentTime + " still have " + (int)(9000 - currentTime) + " milliseconds");
                 cont = true;
             }
-            System.out.println("*** *** *** *** ***");
+            // System.out.println("*** *** *** *** ***");
         }
 
-        // 
         averageSum = (double) totalSum / stateCounter;
         System.out.println("Round 2, Average Sum -: " + averageSum + " State counter: " + stateCounter);
 
@@ -599,27 +624,19 @@ public class QuartoPlayerAgent extends QuartoAgent {
     }
 
     // loop through board and see if the game is in a won state
-    private boolean checkIfGameIsWon(QuartoBoard board) {
-        //loop through rows
-        for(int i = 0; i < NUMBER_OF_ROWS; i++) {
-            //gameIsWon = this.quartoBoard.checkRow(i);
-            if (board.checkRow(i)) {
-                // System.out.println("Win via row: " + (i) + " (zero-indexed)");
-                return true;
-            }
-
+    private boolean checkIfGameIsWon(QuartoBoard board, int row, int column) {
+        // Check row
+        if (board.checkRow(row)) {
+            // System.out.println("Win via row: " + (i) + " (zero-indexed)");
+            return true;
         }
-        //loop through columns
-        for(int i = 0; i < NUMBER_OF_COLUMNS; i++) {
-            //gameIsWon = this.quartoBoard.checkColumn(i);
-            if (board.checkColumn(i)) {
-                // System.out.println("Win via column: " + (i) + " (zero-indexed)");
-                return true;
-            }
-
+        // Check Column
+        if (board.checkColumn(column)) {
+            // System.out.println("Win via column: " + (i) + " (zero-indexed)");
+            return true;
         }
 
-        //check Diagonals
+        // Check Diagonals
         if (board.checkDiagonals()) {
             // System.out.println("Win via diagonal");
             return true;
