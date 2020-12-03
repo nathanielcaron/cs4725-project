@@ -12,7 +12,7 @@
 
 import java.util.Arrays;
 
-public class QuartoPlayerAgent extends QuartoAgent {
+public class QuartoFinalPlayerAgent extends QuartoAgent {
 
     // Class to represent a game state node
     public class GameState {
@@ -90,7 +90,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
         }
     }
 
-    public QuartoPlayerAgent(GameClient gameClient, String stateFileName) {
+    public QuartoFinalPlayerAgent(GameClient gameClient, String stateFileName) {
         // because super calls one of the super class constructors(you can overload constructors), you need to pass the parameters required.
         super(gameClient, stateFileName);
     }
@@ -113,7 +113,7 @@ public class QuartoPlayerAgent extends QuartoAgent {
         }
 
         gameClient.connectToServer(ip, 4321);
-        QuartoPlayerAgent quartoAgent = new QuartoPlayerAgent(gameClient, stateFileName);
+        QuartoFinalPlayerAgent quartoAgent = new QuartoFinalPlayerAgent(gameClient, stateFileName);
         quartoAgent.play();
 
         gameClient.closeConnection();
