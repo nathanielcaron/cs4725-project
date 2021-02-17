@@ -1,6 +1,6 @@
 # CS 4725 - Group Project
-### Nathaniel Caron - 3598979
-### Sahil Saini - 3562310
+### Nathaniel Caron
+### Sahil Saini
 
 ## Quarto Game Tree:
 /\  P1 chooses piece
