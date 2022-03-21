@@ -6,8 +6,8 @@
   *
   * Programming Project
   * 
-  * Nathaniel Caron, 3598979
-  * Sahil Saini, 3562310
+  * Nathaniel Caron
+  * Sahil Saini
   */
 
 import java.util.Arrays;
